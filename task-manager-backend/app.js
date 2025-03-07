@@ -1,4 +1,3 @@
-// File: backend/app.js
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -21,16 +20,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/groups', groupRoutes);
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ msg: 'Something went wrong!' });
-});
-
 // Connect to MongoDB
 const connectDB = async () => {
   try {
-    console.log('Connecting to MongoDB...');
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -42,16 +34,11 @@ const connectDB = async () => {
   }
 };
 
+connectDB();
+
 // Start server
 const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
-const start = async () => {
-  try {
-    await connectDB();
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  } catch (error) {
-    console.error('Error starting server:', error);
-  }
-};
-
-start();

@@ -1,5 +1,4 @@
-// File: src/context/AuthContext.js (updated)
-
+// File: src/context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '../config';
@@ -12,12 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
-  const api = axios.create({
-    baseURL: API_URL,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+
   useEffect(() => {
     // Check if user is already logged in
     const checkLoggedIn = async () => {
@@ -27,22 +21,13 @@ export const AuthProvider = ({ children }) => {
         
         try {
           // Get user data
-          const response = await axios.get(`${API_URL}/users/me`);
-          if (response.data && response.data.user) {
-            setUser(response.data.user);
-          } else {
-            // If no user data returned, clear token
-            console.error('No user data returned');
-            localStorage.removeItem('token');
-            setToken(null);
-          }
+          const userRes = await axios.get(`${API_URL}/users/me`);
+          setUser(userRes.data.user);
         } catch (err) {
-          console.error('Token verification failed:', err);
           // If token is invalid, clear it
+          console.error('Token verification failed:', err);
           localStorage.removeItem('token');
           setToken(null);
-          // Remove authorization header
-          delete axios.defaults.headers.common['Authorization'];
         }
       }
       setLoading(false);
@@ -53,57 +38,47 @@ export const AuthProvider = ({ children }) => {
 
   // Register user
   const register = async (username, email, password) => {
-    try {
-      const response = await axios.post(`${API_URL}/auth/register`, {
-        username,
-        email,
-        password,
-      });
+    const response = await axios.post(`${API_URL}/auth/register`, {
+      username,
+      email,
+      password,
+    });
 
-      const { token: newToken, user: userData } = response.data;
-      
-      // Save token to local storage
-      localStorage.setItem('token', newToken);
-      
-      // Update state
-      setToken(newToken);
-      setUser(userData);
-      
-      // Configure axios for future requests
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-      
-      return userData;
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
-    }
+    const { token: newToken, user: userData } = response.data;
+    
+    // Save token to local storage
+    localStorage.setItem('token', newToken);
+    
+    // Update state
+    setToken(newToken);
+    setUser(userData);
+    
+    // Configure axios for future requests
+    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    
+    return userData;
   };
 
   // Login user
   const login = async (email, password) => {
-    try {
-      const response = await api.post(`/auth/login`, {
-        email,
-        password,
-      });
+    const response = await axios.post(`${API_URL}/auth/login`, {
+      email,
+      password,
+    });
 
-      const { token: newToken, user: userData } = response.data;
-      
-      // Save token to local storage
-      localStorage.setItem('token', newToken);
-      
-      // Update state
-      setToken(newToken);
-      setUser(userData);
-      
-      // Configure axios for future requests
-      axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-      
-      return userData;
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
-    }
+    const { token: newToken, user: userData } = response.data;
+    
+    // Save token to local storage
+    localStorage.setItem('token', newToken);
+    
+    // Update state
+    setToken(newToken);
+    setUser(userData);
+    
+    // Configure axios for future requests
+    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    
+    return userData;
   };
 
   // Logout user
