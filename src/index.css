@@ -1,13 +1,30 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+/* File: src/index.css */
+/* Importaciones de estilos para toda la aplicación */
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
+/* Tema principal y variables globales */
+@import './styles/theme.css';
+
+/* Estilos generales de la aplicación */
+@import './App.css';
+
+/* Estilos para layouts */
+@import './layouts/MainLayout.css';
+
+/* Estilos para páginas */
+@import './pages/Auth.css';
+@import './pages/LandingPage/LandingPage.css';
+@import './pages/Admin/Admin.css';
+
+/* Estilos para componentes */
+@import './components/Tasks.css';
+@import './components/Groups.css';
+@import './components/KanbanBoard.css';
+
+/* Estilos adicionales tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import './styles/global.css';
+@import './styles/component.css';
+@import './styles/pages.css';

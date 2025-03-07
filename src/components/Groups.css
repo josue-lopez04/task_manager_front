@@ -1,0 +1,304 @@
+/* File: src/components/Groups.css */
+/* Estilos para GroupCard, GroupForm y componentes relacionados */
+
+/* GroupCard */
+.group-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    height: 100%;
+  }
+  
+  .group-card-container {
+    background-color: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    height: 100%;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .group-card-container:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transform: translateY(-2px);
+    border-color: var(--primary-light);
+  }
+  
+  .group-title {
+    font-weight: 600;
+    font-size: 1.125rem;
+    margin-bottom: 0.5rem;
+    color: var(--gray-800);
+  }
+  
+  .group-description {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin-bottom: 1rem;
+    line-height: 1.5;
+    flex-grow: 1;
+  }
+  
+  .group-meta {
+    display: flex;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--gray-500);
+  }
+  
+  .group-members {
+    display: flex;
+    align-items: center;
+  }
+  
+  .group-members-icon {
+    margin-right: 0.25rem;
+  }
+  
+  /* GroupForm */
+  .group-form {
+    max-width: 600px;
+  }
+  
+  .group-form-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Group Details */
+  .group-details {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    padding: 1.5rem;
+  }
+  
+  .group-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+  }
+  
+  .group-details-title-container {
+    flex-grow: 1;
+  }
+  
+  .group-details-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 0.25rem;
+  }
+  
+  .group-details-description {
+    color: var(--gray-600);
+    font-size: 0.925rem;
+  }
+  
+  .group-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .group-details-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  @media (min-width: 1024px) {
+    .group-details-layout {
+      grid-template-columns: 3fr 1fr;
+    }
+  }
+  
+  .group-details-main {
+    margin-bottom: 1.5rem;
+  }
+  
+  .group-details-sidebar {
+    margin-bottom: 1.5rem;
+  }
+  
+  .group-section {
+    margin-bottom: 2rem;
+  }
+  
+  .group-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  .group-section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-800);
+  }
+  
+  /* Members List */
+  .members-list {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+  }
+  
+  .members-list-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .members-list-item:last-child {
+    border-bottom: none;
+  }
+  
+  .member-info {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .member-name {
+    font-weight: 500;
+    color: var(--gray-800);
+    font-size: 0.875rem;
+  }
+  
+  .member-email {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+  }
+  
+  .member-actions {
+    display: flex;
+    align-items: center;
+  }
+  
+  .member-badge {
+    font-size: 0.625rem;
+    font-weight: 500;
+    padding: 0.125rem 0.375rem;
+    border-radius: 9999px;
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    margin-right: 0.5rem;
+  }
+  
+  .member-remove-btn {
+    background: none;
+    border: none;
+    color: var(--danger-color);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s ease;
+  }
+  
+  .member-remove-btn:hover {
+    background-color: var(--gray-100);
+  }
+  
+  /* Add Member Form */
+  .add-member-form {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border: 1px solid var(--gray-200);
+    border-radius: 0.5rem;
+    background-color: var(--gray-50);
+  }
+  
+  .add-member-title {
+    font-weight: 500;
+    color: var(--gray-800);
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .member-search {
+    position: relative;
+    margin-bottom: 0.5rem;
+  }
+  
+  .member-search-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+  }
+  
+  .member-search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  }
+  
+  .member-results {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid var(--gray-300);
+    border-radius: 0.375rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .member-result-item {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--gray-200);
+    transition: background-color 0.2s ease;
+  }
+  
+  .member-result-item:last-child {
+    border-bottom: none;
+  }
+  
+  .member-result-item:hover {
+    background-color: var(--gray-100);
+  }
+  
+  .member-result-item.selected {
+    background-color: var(--primary-light);
+  }
+  
+  .member-result-name {
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--gray-800);
+  }
+  
+  .member-result-email {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+  }
+  
+  .add-member-button {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+  }
+  
+  .add-member-button:hover {
+    background-color: var(--primary-dark);
+  }
+  
+  .add-member-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }

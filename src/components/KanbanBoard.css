@@ -1,0 +1,108 @@
+/* File: src/components/KanbanBoard.css */
+/* Estilos específicos para el componente KanbanBoard y funcionalidad de drag-and-drop */
+
+.kanban-container {
+    overflow-x: auto;
+    padding-bottom: 1rem;
+  }
+  
+  .kanban-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    min-width: min-content;
+  }
+  
+  .kanban-column {
+    background-color: var(--gray-50);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    min-width: 280px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .kanban-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--gray-200);
+  }
+  
+  .kanban-column-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    text-transform: capitalize;
+  }
+  
+  .kanban-column-count {
+    font-size: 0.75rem;
+    font-weight: 500;
+    background-color: var(--gray-200);
+    color: var(--gray-700);
+    padding: 0.125rem 0.375rem;
+    border-radius: 9999px;
+  }
+  
+  .kanban-task-list {
+    flex-grow: 1;
+    min-height: 200px;
+  }
+  
+  /* Estilos para cuando está en modo de arrastre */
+  .kanban-column.dragging-over {
+    background-color: var(--primary-light);
+    border: 2px dashed var(--primary-color);
+  }
+  
+  .kanban-task {
+    margin-bottom: 0.75rem;
+    transition: transform 0.2s ease;
+  }
+  
+  .kanban-task.dragging {
+    transform: rotate(2deg) scale(1.02);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .kanban-placeholder {
+    height: 100px;
+    border: 2px dashed var(--gray-300);
+    border-radius: 0.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--gray-400);
+    font-size: 0.875rem;
+  }
+  
+  /* Estilos para las tareas por estado */
+  .kanban-column.todo .kanban-column-header {
+    border-bottom-color: #cbd5e1;
+  }
+  
+  .kanban-column.in-progress .kanban-column-header {
+    border-bottom-color: #93c5fd;
+  }
+  
+  .kanban-column.review .kanban-column-header {
+    border-bottom-color: #fde68a;
+  }
+  
+  .kanban-column.done .kanban-column-header {
+    border-bottom-color: #86efac;
+  }
+  
+  /* Animaciones */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .task-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }

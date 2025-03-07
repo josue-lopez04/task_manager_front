@@ -1,0 +1,109 @@
+@import '../../styles/variables.css';
+
+.task-card {
+  background-color: var(--white);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border-left: 4px solid transparent;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  display: block;
+  text-decoration: none;
+  color: var(--dark);
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.task-card--high {
+  border-left-color: var(--danger-color);
+}
+
+.task-card--medium {
+  border-left-color: var(--warning-color);
+}
+
+.task-card--low {
+  border-left-color: var(--success-color);
+}
+
+.task-card__title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-card__description {
+  font-size: var(--font-size-sm);
+  color: var(--medium);
+  margin-bottom: var(--spacing-md);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.task-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-xs);
+}
+
+.task-card__priority {
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--border-radius-pill);
+  font-weight: 500;
+}
+
+.task-card__priority--high {
+  background-color: var(--high-priority);
+  color: #b91c1c; /* Red 700 */
+}
+
+.task-card__priority--medium {
+  background-color: var(--medium-priority);
+  color: #b45309; /* Amber 700 */
+}
+
+.task-card__priority--low {
+  background-color: var(--low-priority);
+  color: #047857; /* Emerald 700 */
+}
+
+.task-card__date {
+  color: var(--medium);
+}
+
+.task-card__footer {
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--medium);
+  display: flex;
+  align-items: center;
+}
+
+.task-card__user {
+  display: flex;
+  align-items: center;
+}
+
+.task-card__user-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--primary-light);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  margin-right: var(--spacing-xs);
+}

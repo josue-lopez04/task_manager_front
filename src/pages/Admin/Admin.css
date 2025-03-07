@@ -1,0 +1,318 @@
+/* File: src/pages/Admin/Admin.css */
+/* Estilos para componentes de administración */
+
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .admin-header {
+    margin-bottom: 2rem;
+  }
+  
+  .admin-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+  }
+  
+  .admin-subtitle {
+    color: var(--gray-600);
+    font-size: 0.95rem;
+  }
+  
+  .admin-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+  
+  .admin-card-header {
+    padding: 1rem 1.5rem;
+    background-color: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  
+  .admin-card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-800);
+  }
+  
+  .admin-card-body {
+    padding: 1.5rem;
+  }
+  
+  /* User Management */
+  .user-management {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  @media (min-width: 768px) {
+    .user-management {
+      flex-direction: row;
+    }
+  }
+  
+  .user-list-container {
+    flex: 1;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media (min-width: 768px) {
+    .user-list-container {
+      margin-right: 1.5rem;
+      margin-bottom: 0;
+    }
+  }
+  
+  .user-edit-container {
+    flex: 1;
+  }
+  
+  .admin-section-title {
+    font-weight: 500;
+    color: var(--gray-700);
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .user-list {
+    border: 1px solid var(--gray-200);
+    border-radius: 0.375rem;
+    overflow: hidden;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  
+  .user-list-item {
+    border-bottom: 1px solid var(--gray-200);
+  }
+  
+  .user-list-item:last-child {
+    border-bottom: none;
+  }
+  
+  .user-list-button {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .user-list-button:hover {
+    background-color: var(--gray-50);
+  }
+  
+  .user-list-button.active {
+    background-color: var(--primary-light);
+  }
+  
+  .user-list-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .user-list-details {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .user-list-name {
+    font-weight: 500;
+    color: var(--gray-800);
+    font-size: 0.875rem;
+  }
+  
+  .user-list-email {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+  }
+  
+  .user-list-role {
+    display: inline-block;
+    padding: 0.125rem 0.375rem;
+    border-radius: 9999px;
+    background-color: var(--gray-100);
+    color: var(--gray-800);
+    font-size: 0.625rem;
+    font-weight: 500;
+  }
+  
+  .user-edit {
+    border: 1px solid var(--gray-200);
+    border-radius: 0.375rem;
+    padding: 1.5rem;
+  }
+  
+  .user-edit-placeholder {
+    text-align: center;
+    color: var(--gray-500);
+    padding: 2rem 0;
+  }
+  
+  .user-edit-header {
+    margin-bottom: 1.5rem;
+  }
+  
+  .user-edit-name {
+    font-weight: 600;
+    color: var(--gray-800);
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .user-edit-email {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+  }
+  
+  .user-edit-form {
+    margin-top: 1.5rem;
+  }
+  
+  .user-edit-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .user-edit-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+  }
+  
+  .user-edit-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    background-color: white;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+  }
+  
+  .user-edit-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  }
+  
+  .user-edit-button {
+    padding: 0.5rem 1rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+  }
+  
+  .user-edit-button:hover {
+    background-color: var(--primary-dark);
+  }
+  
+  .user-edit-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .user-edit-success {
+    background-color: #d1e7dd;
+    border: 1px solid #badbcc;
+    color: #0f5132;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .user-edit-error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c2c7;
+    color: #842029;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Statistics Section */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .stats-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  .stat-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    padding: 1.5rem;
+  }
+  
+  .stat-title {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+  }
+  
+  .stat-description {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--gray-600);
+  }
+  
+  .stat-trend {
+    display: flex;
+    align-items: center;
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .stat-trend-up {
+    color: var(--success-color);
+  }
+  
+  .stat-trend-down {
+    color: var(--danger-color);
+  }
+  
+  .stat-trend-icon {
+    margin-right: 0.25rem;
+  }

@@ -1,0 +1,109 @@
+/* Estilos para el contenedor principal */
+.tasks-container {
+  padding: 20px;
+  max-width: 19500px;
+  margin: 0 auto;
+  font-family: Arial, sans-serif;
+}
+
+/* Estilos para el encabezado */
+.tasks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.tasks-header h2 {
+  font-size: 2rem;
+  color: #2d3748;
+  margin: 0;
+}
+
+.tasks-header a {
+  background-color: #3182ce;
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.tasks-header a:hover {
+  background-color: #2b6cb0;
+}
+
+/* Estilos para el mensaje de carga */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 16rem;
+}
+
+.loading-container p {
+  color: #718096;
+}
+
+/* Estilos para el mensaje de error */
+.error-container {
+  background-color: #fff5f5;
+  padding: 1rem;
+  border-radius: 0.375rem;
+}
+
+.error-container p {
+  color: #e53e3e;
+}
+
+/* Estilos para el mensaje de tareas vacías */
+.empty-tasks-container {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+.empty-tasks-container p {
+  color: #718096;
+  margin-bottom: 1rem;
+}
+
+.empty-tasks-container a {
+  background-color: #3182ce;
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.empty-tasks-container a:hover {
+  background-color: #2b6cb0;
+}
+
+/* Estilos para el KanbanBoard */
+.kanban-board-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Columnas responsivas */
+  gap: 20px; /* Espacio entre columnas */
+  padding: 10px;
+}
+
+/* Estilos para las columnas del KanbanBoard */
+.kanban-column {
+  background-color: #f9fafb;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.kanban-column h3 {
+  font-size: 1.25rem;
+  color: #2d3748;
+  margin-bottom: 15px;
+  text-transform: capitalize;
+}
