@@ -11,32 +11,9 @@ const TaskDetailPage = () => {
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('todo');
   const [statusLoading, setStatusLoading] = useState(false);
-  const [unauthorized, setUnauthorized] = useState(false);
   const [creatorName, setCreatorName] = useState('');
-
-
-
-  useEffect(() => {
-    const fetchCreator = async () => {
-      if (task && task.createdBy && typeof task.createdBy === 'string') {
-        try {
-          const response = await axios.get(`${API_URL}/users/${task.createdBy}`);
-          if (response.data && response.data.user) {
-            setCreatorName(response.data.user.username);
-          }
-        } catch (err) {
-          console.error('Error fetching creator:', err);
-        }
-      } else if (task && task.createdBy && task.createdBy.username) {
-        setCreatorName(task.createdBy.username);
-      }
-    };
-    
-    fetchCreator();
-  }, [task]);
-
 
   // Función para obtener la tarea directamente con axios
   const fetchTask = async () => {
@@ -45,18 +22,31 @@ const TaskDetailPage = () => {
       const response = await axios.get(`${API_URL}/tasks/${taskId}`);
       
       if (response.data && response.data.task) {
-        setTask(response.data.task);
-        setStatus(response.data.task.status || 'todo');
+        const taskData = response.data.task;
+        setTask(taskData);
+        setStatus(taskData.status || 'todo');
+        
+        // Manejar el nombre del creador
+        if (taskData.createdBy) {
+          if (typeof taskData.createdBy === 'object' && taskData.createdBy.username) {
+            setCreatorName(taskData.createdBy.username);
+          } else if (typeof taskData.createdBy === 'string') {
+            try {
+              const userResponse = await axios.get(`${API_URL}/users/${taskData.createdBy}`);
+              if (userResponse.data && userResponse.data.user) {
+                setCreatorName(userResponse.data.user.username);
+              }
+            } catch (userErr) {
+              console.error('Error fetching creator:', userErr);
+            }
+          }
+        }
       } else {
         throw new Error('Failed to load task data');
       }
     } catch (err) {
       console.error('Error fetching task:', err);
-      if (err.response && err.response.status === 403) {
-        setUnauthorized(true);
-      } else {
-        setError(err.response?.data?.msg || 'Failed to load task');
-      }
+      setError(err.response?.data?.msg || 'Failed to load task');
     } finally {
       setLoading(false);
     }
@@ -72,6 +62,7 @@ const TaskDetailPage = () => {
       
       if (response.data && response.data.task) {
         setTask(response.data.task);
+        console.log('Task status updated successfully');
       } else {
         throw new Error('Failed to update task');
       }
@@ -100,7 +91,7 @@ const TaskDetailPage = () => {
       fetchTask();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taskId]); // Solo incluimos taskId en las dependencias
+  }, [taskId]); 
 
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this task?')) {
@@ -119,17 +110,6 @@ const TaskDetailPage = () => {
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
         <p className="ml-3 text-gray-500">Loading task...</p>
-      </div>
-    );
-  }
-
-  if (unauthorized) {
-    return (
-      <div className="bg-red-50 p-4 rounded-md">
-        <p className="text-red-600">You don't have permission to view this task.</p>
-        <Link to="/tasks" className="text-blue-600 hover:underline mt-2 inline-block">
-          Back to tasks
-        </Link>
       </div>
     );
   }
@@ -156,34 +136,23 @@ const TaskDetailPage = () => {
     );
   }
 
-  // Verificar si el usuario es el creador o si está asignado a la tarea
-  // La propiedad createdBy ahora debería ser un objeto con _id, no solo un ID
-  const isCreator = task.createdBy && task.createdBy._id === user?.userId;
-  const isAssigned = task.assignedTo && task.assignedTo._id === user?.userId;
-  const canEdit = isCreator;
-  const canUpdateStatus = isCreator || isAssigned;
-
   return (
     <div className="bg-white shadow-sm rounded-lg p-6">
       <div className="flex justify-between items-start mb-6">
         <h2 className="text-2xl font-bold">{task.title}</h2>
         <div className="flex space-x-2">
-          {canEdit && (
-            <Link
-              to={`/tasks/${taskId}/edit`}
-              className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
-            >
-              Edit
-            </Link>
-          )}
-          {isCreator && (
-            <button
-              onClick={handleDelete}
-              className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm"
-            >
-              Delete
-            </button>
-          )}
+          <Link
+            to={`/tasks/${taskId}/edit`}
+            className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+          >
+            Edit
+          </Link>
+          <button
+            onClick={handleDelete}
+            className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm"
+          >
+            Delete
+          </button>
         </div>
       </div>
 
@@ -233,48 +202,39 @@ const TaskDetailPage = () => {
         <div>
           <h3 className="text-lg font-semibold mb-3">Status</h3>
           <div className="space-y-4">
-            {canUpdateStatus ? (
-              <div>
-                <label htmlFor="status" className="block text-sm text-gray-500">
-                  Current Status
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  value={status}
-                  onChange={handleStatusChange}
-                  disabled={statusLoading}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                >
-                  <option value="todo">To Do</option>
-                  <option value="in progress">In Progress</option>
-                  <option value="review">Review</option>
-                  <option value="done">Done</option>
-                </select>
-                {statusLoading && (
-                  <p className="text-xs text-gray-500 mt-1">Updating status...</p>
-                )}
-              </div>
-            ) : (
-              <div>
-                <p className="text-sm text-gray-500">Current Status</p>
-                <p className="mt-1 capitalize">{task.status || 'Todo'}</p>
-              </div>
-            )}
+            {/* Selector de estatus siempre disponible */}
+            <div>
+              <label htmlFor="status" className="block text-sm text-gray-500">
+                Current Status
+              </label>
+              <select
+                id="status"
+                name="status"
+                value={status}
+                onChange={handleStatusChange}
+                disabled={statusLoading}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              >
+                <option value="todo">To Do</option>
+                <option value="in progress">In Progress</option>
+                <option value="review">Review</option>
+                <option value="done">Done</option>
+              </select>
+              {statusLoading && (
+                <p className="text-xs text-gray-500 mt-1">Updating status...</p>
+              )}
+            </div>
 
-  <div>
-    <p className="text-sm text-gray-500">Created By</p>
-    <p className="mt-1">{creatorName || 'Unknown'}</p>
-  </div>
-            
+            <div>
+              <p className="text-sm text-gray-500">Created By</p>
+              <p className="mt-1">{creatorName || task.createdBy?.username || 'Unknown'}</p>
+            </div>
+
             {task.assignedTo && (
               <div>
                 <p className="text-sm text-gray-500">Assigned To</p>
-                <p className="mt-1">{task.createdBy?.username || 'Unknown'}</p>
-
-
+                <p className="mt-1">{task.assignedTo.username || 'Unknown'}</p>
               </div>
-              
             )}
 
             <div>
