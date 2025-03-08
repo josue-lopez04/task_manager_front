@@ -1,3 +1,4 @@
+// backend/app.js
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -10,6 +11,9 @@ const userRoutes = require('./routes/userRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const groupRoutes = require('./routes/groupRoutes');
 
+// Import the database connection function
+const connectDB = require('./db/connect');
+
 // Middleware
 app.use(express.json());
 app.use(cors());
@@ -20,25 +24,22 @@ app.use('/api/users', userRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/groups', groupRoutes);
 
-// Connect to MongoDB
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('MongoDB connected');
-  } catch (error) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
-  }
-};
-
-connectDB();
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ msg: 'Something went wrong!' });
+});
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
 
+const start = async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  } catch (error) {
+    console.error('Error starting server:', error);
+  }
+};
+
+start();

@@ -46,22 +46,65 @@ export const GroupProvider = ({ children }) => {
     }
   };
 
-  // Create a new group
-  const createGroup = async (groupData) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axios.post(`${API_URL}/groups`, groupData);
-      setGroups([...groups, response.data.group]);
-      return response.data.group;
-    } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to create group');
-      console.error('Error creating group:', err);
-      throw err;
-    } finally {
-      setLoading(false);
+
+  // En src/context/GroupContext.js
+
+// Crear un grupo
+const createGroup = async (groupData) => {
+  setLoading(true);
+  setError(null);
+  try {
+    const response = await axios.post(`${API_URL}/groups`, groupData);
+    
+    // Verificar explícitamente la estructura de la respuesta
+    if (response && response.data) {
+      console.log("Create group response:", response.data);
+      // Actualizar la lista de grupos
+      if (response.data.group) {
+        setGroups([...groups, response.data.group]);
+      }
+      return response.data;
+    } else {
+      console.error("Invalid response format:", response);
+      throw new Error('Invalid response format');
     }
-  };
+  } catch (err) {
+    console.error('Error creating group:', err);
+    setError(err.response?.data?.msg || 'Failed to create group');
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
+
+// Eliminar un grupo
+const deleteGroup = async (groupId) => {
+  setLoading(true);
+  setError(null);
+  try {
+    const response = await axios.delete(`${API_URL}/groups/${groupId}`);
+    
+    // Verificar explícitamente la respuesta
+    console.log("Delete group response:", response.data);
+    
+    // Actualizar el estado local solo si la respuesta no indica error
+    setGroups(groups.filter(group => group._id !== groupId));
+    
+    return response.data;
+  } catch (err) {
+    console.error('Error deleting group:', err);
+    // Si el error es 404, consideramos que el grupo ya no existe
+    if (err.response?.status === 404) {
+      setGroups(groups.filter(group => group._id !== groupId));
+      return { msg: 'Group removed' }; // Simular éxito
+    }
+    setError(err.response?.data?.msg || 'Failed to delete group');
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // Update a group
   const updateGroup = async (groupId, groupData) => {
@@ -131,23 +174,7 @@ export const GroupProvider = ({ children }) => {
     }
   };
 
-  // Delete a group
-  const deleteGroup = async (groupId) => {
-    setLoading(true);
-    setError(null);
-    try {
-      await axios.delete(`${API_URL}/groups/${groupId}`);
-      
-      // Remove group from local state
-      setGroups(groups.filter(group => group._id !== groupId));
-    } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to delete group');
-      console.error('Error deleting group:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   return (
     <GroupContext.Provider

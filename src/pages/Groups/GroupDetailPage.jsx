@@ -1,4 +1,3 @@
-// File: src/pages/Groups/GroupDetailPage.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useGroupContext } from '../../context/GroupContext';
@@ -6,8 +5,6 @@ import { useTaskContext } from '../../context/TaskContext';
 import { useAuth } from '../../context/AuthContext';
 import TaskForm from '../../components/TaskForm';
 import UserSelector from '../../components/UserSelector';
-import '../../styles/pages.css'
-
 
 const GroupDetailPage = () => {
   const { groupId } = useParams();
@@ -32,8 +29,12 @@ const GroupDetailPage = () => {
     setIsPolling(true);
     try {
       const { group: groupData, tasks: tasksData } = await getGroup(groupId);
-      setGroup(groupData);
-      setTasks(tasksData);
+      if (groupData) {
+        setGroup(groupData);
+        setTasks(tasksData || []);
+      } else {
+        setError('Group not found');
+      }
       if (loading) setLoading(false);
     } catch (err) {
       console.error('Error fetching group data:', err);
@@ -50,11 +51,13 @@ const GroupDetailPage = () => {
     
     // Set up polling for real-time updates
     const interval = setInterval(() => {
-      fetchGroupData();
+      if (!isPolling) {
+        fetchGroupData();
+      }
     }, 3000); // Poll every 3 seconds
     
     return () => clearInterval(interval);
-  }, [fetchGroupData]);
+  }, [fetchGroupData, isPolling]);
 
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this group? All associated tasks will be deleted.')) {
@@ -192,7 +195,7 @@ const GroupDetailPage = () => {
               </div>
             )}
 
-            {tasks.length === 0 ? (
+            {tasks && tasks.length === 0 ? (
               <p className="text-gray-500 text-center py-6">
                 No tasks in this group yet.
                 {isCreator && ' Click "Add Task" to create one.'}
@@ -205,7 +208,7 @@ const GroupDetailPage = () => {
                       {status === "in progress" ? "In Progress" : status.charAt(0).toUpperCase() + status.slice(1)}
                     </h4>
                     <div className="space-y-3">
-                      {tasks
+                      {tasks && tasks
                         .filter(task => task.status === status)
                         .map(task => (
                           <div key={task._id} className="bg-white border rounded-lg p-3 hover:shadow-md transition-shadow">
@@ -239,7 +242,7 @@ const GroupDetailPage = () => {
                             )}
                           </div>
                         ))}
-                      {tasks.filter(task => task.status === status).length === 0 && (
+                      {!tasks || tasks.filter(task => task.status === status).length === 0 && (
                         <p className="text-gray-500 text-sm text-center">No tasks</p>
                       )}
                     </div>
@@ -271,7 +274,7 @@ const GroupDetailPage = () => {
                 <UserSelector
                   onSelect={setSelectedUserId}
                   selectedUserId={selectedUserId}
-                  excludeUsers={group.members.map(member => member._id)}
+                  excludeUsers={group.members ? group.members.map(member => member._id) : []}
                 />
                 <button
                   type="button"

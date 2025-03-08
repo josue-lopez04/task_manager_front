@@ -1,68 +1,135 @@
-// File: src/pages/Tasks/TaskDetailPage.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useTaskContext } from '../../context/TaskContext';
+import axios from 'axios';
+import { API_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext';
 
 const TaskDetailPage = () => {
   const { taskId } = useParams();
   const navigate = useNavigate();
-  const { getTask, deleteTask, updateTask } = useTaskContext();
   const { user } = useAuth();
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState('');
   const [statusLoading, setStatusLoading] = useState(false);
+  const [unauthorized, setUnauthorized] = useState(false);
+  const [creatorName, setCreatorName] = useState('');
+
+
 
   useEffect(() => {
-    const fetchTask = async () => {
-      setLoading(true);
-      try {
-        const taskData = await getTask(taskId);
-        setTask(taskData);
-        setStatus(taskData.status);
-      } catch (err) {
-        setError(err.message || 'Failed to load task');
-      } finally {
-        setLoading(false);
+    const fetchCreator = async () => {
+      if (task && task.createdBy && typeof task.createdBy === 'string') {
+        try {
+          const response = await axios.get(`${API_URL}/users/${task.createdBy}`);
+          if (response.data && response.data.user) {
+            setCreatorName(response.data.user.username);
+          }
+        } catch (err) {
+          console.error('Error fetching creator:', err);
+        }
+      } else if (task && task.createdBy && task.createdBy.username) {
+        setCreatorName(task.createdBy.username);
       }
     };
+    
+    fetchCreator();
+  }, [task]);
 
-    fetchTask();
-  }, [taskId, getTask]);
 
-  const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      try {
-        await deleteTask(taskId);
-        navigate('/tasks');
-      } catch (err) {
-        setError(err.message || 'Failed to delete task');
+  // Función para obtener la tarea directamente con axios
+  const fetchTask = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${API_URL}/tasks/${taskId}`);
+      
+      if (response.data && response.data.task) {
+        setTask(response.data.task);
+        setStatus(response.data.task.status || 'todo');
+      } else {
+        throw new Error('Failed to load task data');
       }
+    } catch (err) {
+      console.error('Error fetching task:', err);
+      if (err.response && err.response.status === 403) {
+        setUnauthorized(true);
+      } else {
+        setError(err.response?.data?.msg || 'Failed to load task');
+      }
+    } finally {
+      setLoading(false);
     }
   };
-
-  const handleStatusChange = async (e) => {
-    const newStatus = e.target.value;
-    setStatus(newStatus);
+  
+  // Función para actualizar el estado de la tarea
+  const updateTaskStatus = async (newStatus) => {
     setStatusLoading(true);
-    
     try {
-      const updatedTask = await updateTask(taskId, { status: newStatus });
-      setTask(updatedTask);
+      const response = await axios.patch(`${API_URL}/tasks/${taskId}`, { 
+        status: newStatus 
+      });
+      
+      if (response.data && response.data.task) {
+        setTask(response.data.task);
+      } else {
+        throw new Error('Failed to update task');
+      }
     } catch (err) {
-      setError(err.message || 'Failed to update task status');
-      setStatus(task.status); // Revert to previous status
+      console.error('Error updating task status:', err);
+      setError(err.response?.data?.msg || 'Failed to update task status');
+      setStatus(task?.status || 'todo'); // Revert to previous status
     } finally {
       setStatusLoading(false);
     }
+  };
+  
+  // Función para eliminar la tarea
+  const deleteTask = async () => {
+    try {
+      await axios.delete(`${API_URL}/tasks/${taskId}`);
+      navigate('/tasks');
+    } catch (err) {
+      setError(err.response?.data?.msg || 'Failed to delete task');
+    }
+  };
+
+  // Efecto para cargar la tarea una sola vez
+  useEffect(() => {
+    if (taskId) {
+      fetchTask();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskId]); // Solo incluimos taskId en las dependencias
+
+  const handleDelete = () => {
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      deleteTask();
+    }
+  };
+
+  const handleStatusChange = (e) => {
+    const newStatus = e.target.value;
+    setStatus(newStatus);
+    updateTaskStatus(newStatus);
   };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <p className="text-gray-500">Loading task...</p>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+        <p className="ml-3 text-gray-500">Loading task...</p>
+      </div>
+    );
+  }
+
+  if (unauthorized) {
+    return (
+      <div className="bg-red-50 p-4 rounded-md">
+        <p className="text-red-600">You don't have permission to view this task.</p>
+        <Link to="/tasks" className="text-blue-600 hover:underline mt-2 inline-block">
+          Back to tasks
+        </Link>
       </div>
     );
   }
@@ -89,8 +156,10 @@ const TaskDetailPage = () => {
     );
   }
 
-  const isCreator = task.createdBy === user?.userId;
-  const isAssigned = task.assignedTo?._id === user?.userId;
+  // Verificar si el usuario es el creador o si está asignado a la tarea
+  // La propiedad createdBy ahora debería ser un objeto con _id, no solo un ID
+  const isCreator = task.createdBy && task.createdBy._id === user?.userId;
+  const isAssigned = task.assignedTo && task.assignedTo._id === user?.userId;
   const canEdit = isCreator;
   const canUpdateStatus = isCreator || isAssigned;
 
@@ -135,7 +204,7 @@ const TaskDetailPage = () => {
 
             <div>
               <p className="text-sm text-gray-500">Priority</p>
-              <p className="mt-1 capitalize">{task.priority}</p>
+              <p className="mt-1 capitalize">{task.priority || 'Medium'}</p>
             </div>
 
             {task.dueDate && (
@@ -154,7 +223,7 @@ const TaskDetailPage = () => {
                   to={`/groups/${task.group._id}`}
                   className="mt-1 text-blue-600 hover:underline inline-block"
                 >
-                  {task.group.name}
+                  {task.group.name || 'Unknown Group'}
                 </Link>
               </div>
             )}
@@ -189,26 +258,29 @@ const TaskDetailPage = () => {
             ) : (
               <div>
                 <p className="text-sm text-gray-500">Current Status</p>
-                <p className="mt-1 capitalize">{task.status}</p>
+                <p className="mt-1 capitalize">{task.status || 'Todo'}</p>
               </div>
             )}
 
-            <div>
-              <p className="text-sm text-gray-500">Created By</p>
-              <p className="mt-1">{task.createdBy?.username || 'Unknown'}</p>
-            </div>
-
+  <div>
+    <p className="text-sm text-gray-500">Created By</p>
+    <p className="mt-1">{creatorName || 'Unknown'}</p>
+  </div>
+            
             {task.assignedTo && (
               <div>
                 <p className="text-sm text-gray-500">Assigned To</p>
-                <p className="mt-1">{task.assignedTo.username}</p>
+                <p className="mt-1">{task.createdBy?.username || 'Unknown'}</p>
+
+
               </div>
+              
             )}
 
             <div>
               <p className="text-sm text-gray-500">Created At</p>
               <p className="mt-1">
-                {new Date(task.createdAt).toLocaleString()}
+                {task.createdAt ? new Date(task.createdAt).toLocaleString() : 'Unknown'}
               </p>
             </div>
           </div>

@@ -1,26 +1,43 @@
-// File: src/pages/Groups/GroupEditPage.jsx (continued)
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useGroupContext } from '../../context/GroupContext';
+import { useAuth } from '../../context/AuthContext';
 import GroupForm from '../../components/GroupForm';
-import '../../styles/pages.css'
-
 
 const GroupEditPage = () => {
   const { groupId } = useParams();
   const navigate = useNavigate();
   const { getGroup } = useGroupContext();
+  const { user } = useAuth();
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notAuthorized, setNotAuthorized] = useState(false);
 
   useEffect(() => {
     const fetchGroup = async () => {
+      if (!groupId) {
+        setError('Group ID is missing');
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       try {
-        const { group: groupData } = await getGroup(groupId);
-        setGroup(groupData);
+        const response = await getGroup(groupId);
+        
+        if (response && response.group) {
+          setGroup(response.group);
+          
+          // Check if current user is the creator
+          if (user && response.group.createdBy && response.group.createdBy._id !== user.userId) {
+            setNotAuthorized(true);
+          }
+        } else {
+          setError('Failed to load group data');
+        }
       } catch (err) {
+        console.error('Error fetching group:', err);
         setError(err.message || 'Failed to load group');
       } finally {
         setLoading(false);
@@ -28,12 +45,23 @@ const GroupEditPage = () => {
     };
 
     fetchGroup();
-  }, [groupId, getGroup]);
+  }, [groupId, getGroup, user]);
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <p className="text-gray-500">Loading group...</p>
+      </div>
+    );
+  }
+
+  if (notAuthorized) {
+    return (
+      <div className="bg-red-50 p-4 rounded-md">
+        <p className="text-red-600">Not authorized: Only the group creator can edit this group</p>
+        <Link to={`/groups/${groupId}`} className="text-blue-600 hover:underline mt-2 inline-block">
+          Back to group details
+        </Link>
       </div>
     );
   }

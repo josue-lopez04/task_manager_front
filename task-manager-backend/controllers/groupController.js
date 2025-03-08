@@ -3,18 +3,63 @@ const Group = require('../models/Group');
 const Task = require('../models/Task');
 
 // Create group
+// En backend/controllers/groupController.js
+
+// Create group
 const createGroup = async (req, res) => {
   try {
+    console.log("Creating group with data:", req.body);
+    console.log("User creating group:", req.user);
+    
     // Add user ID to request body
     req.body.createdBy = req.user.userId;
     req.body.members = [req.user.userId];
     
     const group = await Group.create(req.body);
+    console.log("Created group:", group);
+    
     res.status(201).json({ group });
   } catch (error) {
+    console.error('Group creation error:', error);
     res.status(500).json({ msg: error.message });
   }
 };
+
+
+// Delete group
+const deleteGroup = async (req, res) => {
+  try {
+    const { id: groupId } = req.params;
+    
+    // Primero verificamos si el grupo existe
+    const group = await Group.findOne({ _id: groupId });
+    
+    if (!group) {
+      return res.status(404).json({ msg: `No group with id: ${groupId}` });
+    }
+    
+    // Verificamos si el usuario es el creador del grupo
+    const isCreator = group.createdBy.toString() === req.user.userId;
+    
+    if (!isCreator) {
+      return res.status(403).json({ msg: 'Not authorized to delete this group' });
+    }
+    
+    // Primero eliminar las tareas asociadas
+    await Task.deleteMany({ group: groupId });
+    
+    // Luego eliminar el grupo
+    const result = await Group.findByIdAndDelete(groupId);
+    
+    // No necesitamos volver a verificar si el grupo existe después de eliminarlo
+    
+    res.status(200).json({ msg: 'Group and associated tasks removed successfully' });
+  } catch (error) {
+    console.error('Delete group error:', error);
+    res.status(500).json({ msg: error.message });
+  }
+};
+
 
 // Get all groups for current user
 const getAllGroups = async (req, res) => {
@@ -176,34 +221,7 @@ const removeGroupMember = async (req, res) => {
   }
 };
 
-// Delete group
-const deleteGroup = async (req, res) => {
-  try {
-    const { id: groupId } = req.params;
-    const group = await Group.findOne({ _id: groupId });
-    
-    if (!group) {
-      return res.status(404).json({ msg: `No group with id: ${groupId}` });
-    }
-    
-    // Check if user is creator of this group
-    const isCreator = group.createdBy.toString() === req.user.userId;
-    
-    if (!isCreator) {
-      return res.status(403).json({ msg: 'Not authorized to delete this group' });
-    }
-    
-    // Delete all tasks associated with this group
-    await Task.deleteMany({ group: groupId });
-    
-    // Delete the group
-    await Group.findOneAndDelete({ _id: groupId });
-    
-    res.status(200).json({ msg: 'Group and associated tasks removed' });
-  } catch (error) {
-    res.status(500).json({ msg: error.message });
-  }
-};
+
 
 module.exports = {
   createGroup,

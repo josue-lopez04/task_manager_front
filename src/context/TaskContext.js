@@ -1,4 +1,3 @@
-// File: src/context/TaskContext.js
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import axios from 'axios';
 import { API_URL } from '../config';
@@ -18,10 +17,14 @@ export const TaskProvider = ({ children }) => {
     setError(null);
     try {
       const response = await axios.get(`${API_URL}/tasks`);
-      setTasks(response.data.tasks);
+      if (response.data && response.data.tasks) {
+        setTasks(response.data.tasks);
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to fetch tasks');
       console.error('Error fetching tasks:', err);
+      setError(err.response?.data?.msg || 'Failed to fetch tasks');
     } finally {
       setLoading(false);
     }
@@ -32,11 +35,21 @@ export const TaskProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
+      console.log(`Fetching task with ID: ${taskId}`);
       const response = await axios.get(`${API_URL}/tasks/${taskId}`);
-      return response.data.task;
+      console.log("Task API Response:", response.data);
+      
+      if (!response.data) {
+        throw new Error('No data received from server');
+      }
+      
+      return response.data;
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to fetch task');
       console.error('Error fetching task:', err);
+      if (err.response) {
+        console.error('Error response:', err.response.data);
+      }
+      setError(err.response?.data?.msg || 'Failed to fetch task');
       throw err;
     } finally {
       setLoading(false);
@@ -49,11 +62,15 @@ export const TaskProvider = ({ children }) => {
     setError(null);
     try {
       const response = await axios.post(`${API_URL}/tasks`, taskData);
-      setTasks([...tasks, response.data.task]);
-      return response.data.task;
+      if (response.data && response.data.task) {
+        setTasks([...tasks, response.data.task]);
+        return response.data;
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to create task');
       console.error('Error creating task:', err);
+      setError(err.response?.data?.msg || 'Failed to create task');
       throw err;
     } finally {
       setLoading(false);
@@ -67,15 +84,19 @@ export const TaskProvider = ({ children }) => {
     try {
       const response = await axios.patch(`${API_URL}/tasks/${taskId}`, taskData);
       
-      // Update task in local state
-      setTasks(tasks.map(task => 
-        task._id === taskId ? response.data.task : task
-      ));
-      
-      return response.data.task;
+      if (response.data && response.data.task) {
+        // Update task in local state
+        setTasks(tasks.map(task => 
+          task._id === taskId ? response.data.task : task
+        ));
+        
+        return response.data;
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to update task');
       console.error('Error updating task:', err);
+      setError(err.response?.data?.msg || 'Failed to update task');
       throw err;
     } finally {
       setLoading(false);
@@ -87,13 +108,15 @@ export const TaskProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      await axios.delete(`${API_URL}/tasks/${taskId}`);
+      const response = await axios.delete(`${API_URL}/tasks/${taskId}`);
       
       // Remove task from local state
       setTasks(tasks.filter(task => task._id !== taskId));
+      
+      return response.data;
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to delete task');
       console.error('Error deleting task:', err);
+      setError(err.response?.data?.msg || 'Failed to delete task');
       throw err;
     } finally {
       setLoading(false);

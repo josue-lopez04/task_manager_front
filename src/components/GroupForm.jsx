@@ -1,4 +1,3 @@
-// File: src/components/GroupForm.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGroupContext } from '../context/GroupContext';
@@ -31,26 +30,47 @@ const GroupForm = ({ group }) => {
       [name]: value,
     }));
   };
+// En src/components/GroupForm.jsx
 
-  const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission
-    setLoading(true);
-    setError('');
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!formData.name.trim()) {
+    setError('Group name is required');
+    return;
+  }
+  
+  setLoading(true);
+  setError('');
 
-    try {
-      if (group) {
-        await updateGroup(group._id, formData);
-        navigate(`/groups/${group._id}`);
-      } else {
-        const result = await createGroup(formData);
-        navigate('/groups');
-      }
-    } catch (err) {
-      console.error('Group form error:', err);
-      setError(err.response?.data?.msg || 'Failed to save group');
-    } finally {
-      setLoading(false);
+  try {
+    console.log("Submitting group form:", formData);
+    
+    if (group) {
+      // Update existing group
+      const result = await updateGroup(group._id, formData);
+      console.log("Update group result:", result);
+      
+      // No verificar estructura específica, solo navegar si no hay error
+      navigate(`/groups/${group._id}`);
+    } else {
+      // Create new group
+      const result = await createGroup(formData);
+      console.log("Create group result:", result);
+      
+      // No verificar estructura específica, solo navegar si no hay error
+      navigate('/groups');
     }
+  } catch (err) {
+    console.error('Group form error:', err);
+    setError(err.response?.data?.msg || err.message || 'Failed to save group');
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const handleCancel = () => {
+    navigate(group ? `/groups/${group._id}` : '/groups');
   };
 
   return (
@@ -63,7 +83,7 @@ const GroupForm = ({ group }) => {
 
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-          Group Name
+          Group Name <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -95,7 +115,7 @@ const GroupForm = ({ group }) => {
       <div className="flex justify-end">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={handleCancel}
           className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-2"
           disabled={loading}
         >
