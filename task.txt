@@ -1,0 +1,11 @@
+Enlaces del Proyecto
+
+Frontend: https://task-manager-frontend-rosy-theta.vercel.app
+Backend: https://task-manager-backend-paleiegme-josuelopezs-projects.vercel.app
+Repositorio Frontend: https://github.com/josue-lopez04/task_manager_front.git
+Repositorio Backend: https://github.com/josue-lopez04/task_manager_back.git
+
+Credenciales de Administrador
+
+Email: admin@gmail.com
+Contraseña: admin123

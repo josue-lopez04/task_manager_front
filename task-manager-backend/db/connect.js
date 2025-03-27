@@ -1,4 +1,3 @@
-// backend/db/connect.js
 const mongoose = require('mongoose');
 
 const connectDB = async () => {

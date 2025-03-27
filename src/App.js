@@ -1,7 +1,7 @@
-// File: src/App.js
+// src/App.js
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import { TaskProvider } from './context/TaskContext';
 import { GroupProvider } from './context/GroupContext';
 import { UserProvider } from './context/UserContext';
@@ -25,95 +25,46 @@ import GroupEditPage from './pages/Groups/GroupEditPage';
 import AdminPage from './pages/Admin/AdminPage';
 import NotFoundPage from './pages/NotFoundPage';
 
-// Private Route component for authentication
-const PrivateRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
-};
-
-// Admin Route component for authorization
-const AdminRoute = ({ children }) => {
-  const { isAuthenticated, loading, user } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (user?.role !== 'admin') {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return children;
-};
-
-// Public Route component to redirect authenticated users
-const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
-  }
-
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return children;
-};
+// Protected Routes
+import { PrivateRoute, PublicRoute, AdminRoute } from './components/ProtectedRoutes';
 
 function App() {
   return (
+    <Router>
       <AuthProvider>
         <TaskProvider>
           <GroupProvider>
             <UserProvider>
               <Routes>
                 {/* Public routes */}
-                <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
-                <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-                <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+                <Route element={<PublicRoute />}>
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                </Route>
 
                 {/* Protected routes */}
-                <Route path="/" element={<PrivateRoute><MainLayout /></PrivateRoute>}>
-                  <Route path="dashboard" element={<DashboardPage />} />
-                  
-                  <Route path="tasks" element={<TasksPage />} />
-                  <Route path="tasks/create" element={<TaskCreatePage />} />
-                  <Route path="tasks/:taskId" element={<TaskDetailPage />} />
-                  <Route path="tasks/:taskId/edit" element={<TaskEditPage />} />
-                  
-                  <Route path="groups" element={<GroupsPage />} />
-                  <Route path="groups/create" element={<GroupCreatePage />} />
-                  <Route path="groups/:groupId" element={<GroupDetailPage />} />
-                  <Route path="groups/:groupId/edit" element={<GroupEditPage />} />
-                  
-                  {/* Admin routes */}
-                  <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+                <Route element={<PrivateRoute />}>
+                  <Route element={<MainLayout />}>
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    
+                    <Route path="/tasks" element={<TasksPage />} />
+                    <Route path="/tasks/create" element={<TaskCreatePage />} />
+                    <Route path="/tasks/:taskId" element={<TaskDetailPage />} />
+                    <Route path="/tasks/:taskId/edit" element={<TaskEditPage />} />
+                    
+                    <Route path="/groups" element={<GroupsPage />} />
+                    <Route path="/groups/create" element={<GroupCreatePage />} />
+                    <Route path="/groups/:groupId" element={<GroupDetailPage />} />
+                    <Route path="/groups/:groupId/edit" element={<GroupEditPage />} />
+                  </Route>
+                </Route>
+
+                {/* Admin routes */}
+                <Route element={<AdminRoute />}>
+                  <Route element={<MainLayout />}>
+                    <Route path="/admin" element={<AdminPage />} />
+                  </Route>
                 </Route>
 
                 {/* 404 route */}
@@ -123,6 +74,7 @@ function App() {
           </GroupProvider>
         </TaskProvider>
       </AuthProvider>
+    </Router>
   );
 }
 

@@ -10,12 +10,16 @@
     {
       "src": "/(.*)",
       "dest": "/app.js",
-      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       "headers": {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+        "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Accept, Authorization"
       }
     }
-  ]
+  ],
+  "env": {
+    "MONGODB_URI": "mongodb+srv://taskmanager-admin:123qwe@cluster0.zdx87.mongodb.net/taskmanager?retryWrites=true&w=majority&appName=Cluster0",
+    "JWT_SECRET": "mysecretkeyt",
+    "JWT_LIFETIME": "30d"
+  }
 }

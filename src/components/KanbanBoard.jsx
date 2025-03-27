@@ -1,112 +1,92 @@
-// File: src/components/KanbanBoard.jsx
-import React, { useState, useEffect } from 'react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import TaskCard from './TaskCard';
-import './KanbanBoard.css';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import './KanbanBoard.css'; // Asegúrate de tener este archivo CSS
 
 const KanbanBoard = ({ tasks, onTaskUpdate }) => {
-  const [columns, setColumns] = useState({
-    todo: { name: 'To Do', items: [] },
-    'in progress': { name: 'In Progress', items: [] },
-    review: { name: 'Review', items: [] },
-    done: { name: 'Done', items: [] }
-  });
-
-  useEffect(() => {
-    if (tasks && tasks.length > 0) {
-      const newColumns = {
-        todo: { name: 'To Do', items: [] },
-        'in progress': { name: 'In Progress', items: [] },
-        review: { name: 'Review', items: [] },
-        done: { name: 'Done', items: [] }
-      };
-
-      tasks.forEach(task => {
-        const status = task.status.toLowerCase();
-        if (newColumns[status]) {
-          newColumns[status].items.push(task);
-        } else {
-          newColumns.todo.items.push(task);
-        }
-      });
-
-      setColumns(newColumns);
-    }
-  }, [tasks]);
-
-  const onDragEnd = (result) => {
-    const { source, destination, draggableId } = result;
-    if (!destination) return;
-    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
-
-    const sourceColumn = columns[source.droppableId];
-    const destColumn = columns[destination.droppableId];
-
-    if (source.droppableId === destination.droppableId) {
-      const newItems = Array.from(sourceColumn.items);
-      const [movedItem] = newItems.splice(source.index, 1);
-      newItems.splice(destination.index, 0, movedItem);
-
-      setColumns(prev => ({
-        ...prev,
-        [source.droppableId]: { ...sourceColumn, items: newItems }
-      }));
-    } else {
-      const sourceItems = Array.from(sourceColumn.items);
-      const destItems = Array.from(destColumn.items);
-      const [movedItem] = sourceItems.splice(source.index, 1);
-      const updatedTask = { ...movedItem, status: destination.droppableId };
-      destItems.splice(destination.index, 0, updatedTask);
-
-      setColumns(prev => ({
-        ...prev,
-        [source.droppableId]: { ...sourceColumn, items: sourceItems },
-        [destination.droppableId]: { ...destColumn, items: destItems }
-      }));
-
-      if (onTaskUpdate) {
-        onTaskUpdate(draggableId, { status: destination.droppableId });
-      }
+  // Función para obtener el color según la prioridad
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
+  // Estados para el tablero Kanban
+  const statuses = ["todo", "in progress", "review", "done"];
+  
+  // Función para manejar el cambio de estado
+  const handleStatusChange = (taskId, newStatus) => {
+    onTaskUpdate(taskId, { status: newStatus });
+  };
+
+  // Agrupar tareas por estado
+  const tasksByStatus = statuses.reduce((acc, status) => {
+    acc[status] = tasks.filter(task => task.status === status);
+    return acc;
+  }, {});
+
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {Object.entries(columns).map(([columnId, column]) => (
-          <div key={columnId} className="bg-gray-50 p-3 rounded-lg">
-            <h3 className="font-semibold text-lg mb-3 capitalize">
-              {column.name} ({column.items.length})
-            </h3>
-            <Droppable droppableId={columnId}>
-              {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="min-h-[200px]"
-                >
-                  {column.items.map((task, index) => (
-                    <Draggable key={task._id} draggableId={task._id} index={index}>
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="mb-3"
-                        >
-                          <TaskCard task={task} />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
+    <div className="kanban-board">
+      {statuses.map(status => (
+        <div key={status} className="kanban-column">
+          <h3 className="kanban-column-title">
+            {status === "in progress" ? "In Progress" : status.charAt(0).toUpperCase() + status.slice(1)}
+          </h3>
+          
+          <div className="kanban-tasks">
+            {tasksByStatus[status].length > 0 ? (
+              tasksByStatus[status].map(task => (
+                <div key={task._id} className="kanban-task">
+                  <Link to={`/tasks/${task._id}`} className="kanban-task-title">
+                    {task.title}
+                  </Link>
+                  
+                  {task.description && (
+                    <p className="kanban-task-description">{task.description}</p>
+                  )}
+                  
+                  <div className="kanban-task-footer">
+                    <span className={`kanban-task-priority ${getPriorityColor(task.priority)}`}>
+                      {task.priority}
+                    </span>
+                    
+                    {task.assignedTo && (
+                      <span className="kanban-task-assigned">
+                        {typeof task.assignedTo === 'object' ? task.assignedTo.username : 'Assigned'}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="kanban-task-actions">
+                    <select
+                      value={task.status}
+                      onChange={(e) => handleStatusChange(task._id, e.target.value)}
+                      className="kanban-task-select"
+                    >
+                      {statuses.map(s => (
+                        <option key={s} value={s}>
+                          {s === "in progress" ? "In Progress" : s.charAt(0).toUpperCase() + s.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              )}
-            </Droppable>
+              ))
+            ) : (
+              <div className="kanban-empty-column">
+                <p>No tasks</p>
+              </div>
+            )}
           </div>
-        ))}
-      </div>
-    </DragDropContext>
+        </div>
+      ))}
+    </div>
   );
 };
 

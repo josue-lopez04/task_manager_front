@@ -1,7 +1,6 @@
-// File: src/pages/Admin/AdminPage.jsx
+// src/pages/Admin/AdminPage.jsx
 import React from 'react';
 import AdminUserList from '../../components/AdminUserList';
-import './Admin.css';
 
 const AdminPage = () => {
   return (

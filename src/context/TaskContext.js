@@ -1,141 +1,143 @@
+// src/context/TaskContext.js
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import axios from 'axios';
-import { API_URL } from '../config';
+import { taskService } from '../services/taskService';
 
+// Crear el contexto
 const TaskContext = createContext();
 
+// Hook personalizado para usar el contexto
 export const useTaskContext = () => useContext(TaskContext);
 
+// Proveedor del contexto
 export const TaskProvider = ({ children }) => {
+  // Estado para la lista de tareas
   const [tasks, setTasks] = useState([]);
+  // Estado para operaciones globales (como fetchTasks)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch all tasks for the current user
+  // Obtener todas las tareas del usuario actual
   const fetchTasks = useCallback(async () => {
-    setLoading(true);
-    setError(null);
     try {
-      const response = await axios.get(`${API_URL}/tasks`);
-      if (response.data && response.data.tasks) {
-        setTasks(response.data.tasks);
-      } else {
-        throw new Error('Invalid response format');
-      }
+      console.log('[TaskContext] Fetching all tasks');
+      setLoading(true);
+      setError(null);
+      const tasksData = await taskService.getAllTasks();
+      console.log('[TaskContext] Tasks fetched:', tasksData?.length || 0);
+      setTasks(tasksData || []);
     } catch (err) {
-      console.error('Error fetching tasks:', err);
-      setError(err.response?.data?.msg || 'Failed to fetch tasks');
+      console.error('[TaskContext] Error fetching tasks:', err);
+      setError(err.message || 'Failed to fetch tasks');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Get a single task
+  // IMPORTANTE: getTask no modifica el estado global del contexto
+  // para evitar interferencias entre componentes
   const getTask = async (taskId) => {
-    setLoading(true);
-    setError(null);
+    console.log(`[TaskContext] Getting task: ${taskId}`);
     try {
-      console.log(`Fetching task with ID: ${taskId}`);
-      const response = await axios.get(`${API_URL}/tasks/${taskId}`);
-      console.log("Task API Response:", response.data);
-      
-      if (!response.data) {
-        throw new Error('No data received from server');
-      }
-      
-      return response.data;
+      // No modificamos el estado loading/error del contexto
+      const response = await taskService.getTask(taskId);
+      console.log('[TaskContext] Task retrieved:', response ? 'yes' : 'no');
+      return response;
     } catch (err) {
-      console.error('Error fetching task:', err);
-      if (err.response) {
-        console.error('Error response:', err.response.data);
-      }
-      setError(err.response?.data?.msg || 'Failed to fetch task');
+      console.error('[TaskContext] Error getting task:', err);
+      // No actualizamos el estado de error global
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Create a new task
+  // Crear una nueva tarea
   const createTask = async (taskData) => {
-    setLoading(true);
-    setError(null);
     try {
-      const response = await axios.post(`${API_URL}/tasks`, taskData);
-      if (response.data && response.data.task) {
-        setTasks([...tasks, response.data.task]);
-        return response.data;
-      } else {
-        throw new Error('Invalid response format');
+      console.log('[TaskContext] Creating task');
+      setLoading(true);
+      setError(null);
+      const newTask = await taskService.createTask(taskData);
+      console.log('[TaskContext] Task created:', newTask?._id);
+      
+      // Actualizar la lista de tareas solo si la tarea fue creada correctamente
+      if (newTask) {
+        setTasks(prev => [...prev, newTask]);
       }
+      
+      return newTask;
     } catch (err) {
-      console.error('Error creating task:', err);
-      setError(err.response?.data?.msg || 'Failed to create task');
+      console.error('[TaskContext] Error creating task:', err);
+      setError(err.message || 'Failed to create task');
       throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  // Update a task
+  // Actualizar una tarea existente
   const updateTask = async (taskId, taskData) => {
-    setLoading(true);
-    setError(null);
     try {
-      const response = await axios.patch(`${API_URL}/tasks/${taskId}`, taskData);
+      console.log(`[TaskContext] Updating task: ${taskId}`);
+      setLoading(true);
+      setError(null);
+      const updatedTask = await taskService.updateTask(taskId, taskData);
+      console.log('[TaskContext] Task updated:', updatedTask?._id);
       
-      if (response.data && response.data.task) {
-        // Update task in local state
-        setTasks(tasks.map(task => 
-          task._id === taskId ? response.data.task : task
+      // Actualizar la lista de tareas solo si la tarea fue actualizada correctamente
+      if (updatedTask) {
+        setTasks(prev => prev.map(task => 
+          task._id === taskId ? updatedTask : task
         ));
-        
-        return response.data;
-      } else {
-        throw new Error('Invalid response format');
       }
+      
+      return updatedTask;
     } catch (err) {
-      console.error('Error updating task:', err);
-      setError(err.response?.data?.msg || 'Failed to update task');
+      console.error('[TaskContext] Error updating task:', err);
+      setError(err.message || 'Failed to update task');
       throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  // Delete a task
+  // Eliminar una tarea
   const deleteTask = async (taskId) => {
-    setLoading(true);
-    setError(null);
     try {
-      const response = await axios.delete(`${API_URL}/tasks/${taskId}`);
+      console.log(`[TaskContext] Deleting task: ${taskId}`);
+      setLoading(true);
+      setError(null);
+      await taskService.deleteTask(taskId);
+      console.log('[TaskContext] Task deleted');
       
-      // Remove task from local state
-      setTasks(tasks.filter(task => task._id !== taskId));
-      
-      return response.data;
+      setTasks(prev => prev.filter(task => task._id !== taskId));
     } catch (err) {
-      console.error('Error deleting task:', err);
-      setError(err.response?.data?.msg || 'Failed to delete task');
+      console.error('[TaskContext] Error deleting task:', err);
+      setError(err.message || 'Failed to delete task');
       throw err;
     } finally {
       setLoading(false);
     }
+  };
+
+  // Limpiar errores
+  const clearError = () => {
+    setError(null);
+  };
+
+  // Valor del contexto
+  const value = {
+    tasks,
+    loading,
+    error,
+    fetchTasks,
+    getTask,
+    createTask,
+    updateTask,
+    deleteTask,
+    clearError
   };
 
   return (
-    <TaskContext.Provider
-      value={{
-        tasks,
-        loading,
-        error,
-        fetchTasks,
-        getTask,
-        createTask,
-        updateTask,
-        deleteTask,
-      }}
-    >
+    <TaskContext.Provider value={value}>
       {children}
     </TaskContext.Provider>
   );

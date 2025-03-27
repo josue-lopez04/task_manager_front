@@ -5,6 +5,7 @@ import { useTaskContext } from '../../context/TaskContext';
 import { useAuth } from '../../context/AuthContext';
 import TaskForm from '../../components/TaskForm';
 import UserSelector from '../../components/UserSelector';
+import TaskFormModal from '../../components/TaskForm/TaskFormModal';
 
 const GroupDetailPage = () => {
   const { groupId } = useParams();
@@ -12,20 +13,22 @@ const GroupDetailPage = () => {
   const { getGroup, deleteGroup, addGroupMember, removeGroupMember } = useGroupContext();
   const { updateTask } = useTaskContext();
   const { user } = useAuth();
-  
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [taskCreatedMessage, setTaskCreatedMessage] = useState('');
+
   const [group, setGroup] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showAddMember, setShowAddMember] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [showTaskForm] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
 
   // Function to fetch group data and tasks
   const fetchGroupData = useCallback(async () => {
     if (isPolling) return; // Prevent multiple concurrent requests
-    
+
     setIsPolling(true);
     try {
       const { group: groupData, tasks: tasksData } = await getGroup(groupId);
@@ -48,16 +51,28 @@ const GroupDetailPage = () => {
   useEffect(() => {
     // Initial fetch
     fetchGroupData();
-    
+
     // Set up polling for real-time updates
     const interval = setInterval(() => {
       if (!isPolling) {
         fetchGroupData();
       }
     }, 3000); // Poll every 3 seconds
-    
+
     return () => clearInterval(interval);
   }, [fetchGroupData, isPolling]);
+
+  // Función para cerrar el modal y actualizar los datos
+  const handleTaskModalClose = () => {
+    setShowTaskModal(false);
+    fetchGroupData(); // Recargar datos para mostrar la nueva tarea
+    
+    // Mostrar mensaje de éxito temporal
+    setTaskCreatedMessage('Task created successfully!');
+    setTimeout(() => {
+      setTaskCreatedMessage('');
+    }, 3000);
+  };
 
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this group? All associated tasks will be deleted.')) {
@@ -73,7 +88,7 @@ const GroupDetailPage = () => {
   const handleAddMember = async (e) => {
     if (e) e.preventDefault();
     if (!selectedUserId) return;
-    
+
     try {
       const updatedGroup = await addGroupMember(groupId, selectedUserId);
       setGroup(updatedGroup);
@@ -149,15 +164,9 @@ const GroupDetailPage = () => {
         <div className="flex space-x-2">
           {isCreator && (
             <>
-              <Link
-                to={`/groups/${groupId}/edit`}
-                className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
-              >
-                Edit
-              </Link>
               <button
                 onClick={handleDelete}
-                className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm"
+                className="px-3 py-1 bg-red-600 text-black rounded-md hover:bg-red-700 text-sm"
               >
                 Delete
               </button>
@@ -171,19 +180,26 @@ const GroupDetailPage = () => {
           {error}
         </div>
       )}
+      
+      {/* Mensaje de éxito al crear tarea */}
+      {taskCreatedMessage && (
+        <div className="mb-4 bg-green-50 p-3 rounded text-green-600 text-sm">
+          {taskCreatedMessage}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <div className="bg-white shadow-sm rounded-lg p-4 mb-6">
+          <div className="bg-white shadow-sm rounded-lg p-4 mb-6 overflow-hidden">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Tasks</h3>
               {isCreator && (
                 <button
                   type="button"
-                  onClick={() => setShowTaskForm(!showTaskForm)}
+                  onClick={() => setShowTaskModal(true)}
                   className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
                 >
-                  {showTaskForm ? 'Cancel' : 'Add Task'}
+                  Add Task
                 </button>
               )}
             </div>
@@ -195,29 +211,39 @@ const GroupDetailPage = () => {
               </div>
             )}
 
+            <TaskFormModal 
+              isOpen={showTaskModal} 
+              onClose={handleTaskModalClose} 
+              groupId={groupId} 
+            />
+
             {tasks && tasks.length === 0 ? (
               <p className="text-gray-500 text-center py-6">
                 No tasks in this group yet.
                 {isCreator && ' Click "Add Task" to create one.'}
               </p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="kanban-board flex flex-col md:flex-row gap-4 overflow-x-auto pb-4">
                 {["todo", "in progress", "review", "done"].map((status) => (
-                  <div key={status} className="bg-gray-50 p-3 rounded-lg">
-                    <h4 className="font-semibold text-lg mb-3 capitalize">
+                  <div key={status} className="bg-gray-50 p-3 rounded-lg min-w-[250px] md:w-1/4 flex-shrink-0">
+                    <h4 className="font-semibold text-lg mb-3 capitalize text-center">
                       {status === "in progress" ? "In Progress" : status.charAt(0).toUpperCase() + status.slice(1)}
                     </h4>
-                    <div className="space-y-3">
+                    <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto pr-1">
                       {tasks && tasks
                         .filter(task => task.status === status)
                         .map(task => (
                           <div key={task._id} className="bg-white border rounded-lg p-3 hover:shadow-md transition-shadow">
                             <h5 className="font-semibold">{task.title}</h5>
                             {task.description && (
-                              <p className="text-gray-600 text-sm mt-1">{task.description}</p>
+                              <p className="text-gray-600 text-sm mt-1 line-clamp-2">{task.description}</p>
                             )}
                             <div className="mt-2 flex justify-between items-center">
-                              <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                task.priority === 'high' ? 'bg-red-100 text-red-800' : 
+                                task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' : 
+                                'bg-green-100 text-green-800'
+                              }`}>
                                 {task.priority}
                               </span>
                               {task.assignedTo && (
@@ -242,8 +268,10 @@ const GroupDetailPage = () => {
                             )}
                           </div>
                         ))}
-                      {!tasks || tasks.filter(task => task.status === status).length === 0 && (
-                        <p className="text-gray-500 text-sm text-center">No tasks</p>
+                      {(!tasks || (tasks.filter(task => task.status === status).length === 0)) && (
+                        <div className="py-8 px-2 border border-dashed border-gray-300 rounded bg-white text-center">
+                          <p className="text-gray-500 text-sm">No tasks</p>
+                        </div>
                       )}
                     </div>
                   </div>

@@ -1,41 +1,41 @@
-// File: src/context/UserContext.js
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import axios from 'axios';
-import { API_URL } from '../config';
+import { userService } from '../services/userService';
 
+// Crear el contexto
 const UserContext = createContext();
 
+// Hook personalizado para usar el contexto
 export const useUserContext = () => useContext(UserContext);
 
+// Proveedor del contexto
 export const UserProvider = ({ children }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch all users
+  // Obtener todos los usuarios
   const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
     try {
-      const response = await axios.get(`${API_URL}/users`);
-      setUsers(response.data.users);
+      setLoading(true);
+      setError(null);
+      const usersData = await userService.getAllUsers();
+      setUsers(usersData);
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to fetch users');
+      setError(err.message || 'Failed to fetch users');
       console.error('Error fetching users:', err);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Get a single user
+  // Obtener un usuario específico
   const getUser = async (userId) => {
-    setLoading(true);
-    setError(null);
     try {
-      const response = await axios.get(`${API_URL}/users/${userId}`);
-      return response.data.user;
+      setLoading(true);
+      setError(null);
+      return await userService.getUser(userId);
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to fetch user');
+      setError(err.message || 'Failed to fetch user');
       console.error('Error fetching user:', err);
       throw err;
     } finally {
@@ -43,21 +43,16 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  // Update user role (admin only)
+  // Actualizar el rol de un usuario (solo admin)
   const updateUserRole = async (userId, roleData) => {
-    setLoading(true);
-    setError(null);
     try {
-      const response = await axios.patch(`${API_URL}/users/${userId}/role`, roleData);
-      
-      // Update user in local state
-      setUsers(users.map(user => 
-        user._id === userId ? response.data.user : user
-      ));
-      
-      return response.data.user;
+      setLoading(true);
+      setError(null);
+      const updatedUser = await userService.updateUserRole(userId, roleData);
+      setUsers(users.map(user => user._id === userId ? updatedUser : user));
+      return updatedUser;
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to update user role');
+      setError(err.message || 'Failed to update user role');
       console.error('Error updating user role:', err);
       throw err;
     } finally {
@@ -65,17 +60,18 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  // Valor del contexto
+  const value = {
+    users,
+    loading,
+    error,
+    fetchUsers,
+    getUser,
+    updateUserRole
+  };
+
   return (
-    <UserContext.Provider
-      value={{
-        users,
-        loading,
-        error,
-        fetchUsers,
-        getUser,
-        updateUserRole,
-      }}
-    >
+    <UserContext.Provider value={value}>
       {children}
     </UserContext.Provider>
   );

@@ -1,44 +1,41 @@
-// File: src/context/GroupContext.js
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import axios from 'axios';
-import { API_URL } from '../config';
+import { groupService } from '../services/groupService';
 
+// Crear el contexto
 const GroupContext = createContext();
 
+// Hook personalizado para usar el contexto
 export const useGroupContext = () => useContext(GroupContext);
 
+// Proveedor del contexto
 export const GroupProvider = ({ children }) => {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch all groups for the current user
+  // Obtener todos los grupos del usuario actual
   const fetchGroups = useCallback(async () => {
-    setLoading(true);
-    setError(null);
     try {
-      const response = await axios.get(`${API_URL}/groups`);
-      setGroups(response.data.groups);
+      setLoading(true);
+      setError(null);
+      const groupsData = await groupService.getAllGroups();
+      setGroups(groupsData);
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to fetch groups');
+      setError(err.message || 'Failed to fetch groups');
       console.error('Error fetching groups:', err);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Get a single group with its tasks
+  // Obtener un grupo específico
   const getGroup = async (groupId) => {
-    setLoading(true);
-    setError(null);
     try {
-      const response = await axios.get(`${API_URL}/groups/${groupId}`);
-      return {
-        group: response.data.group,
-        tasks: response.data.tasks
-      };
+      setLoading(true);
+      setError(null);
+      return await groupService.getGroup(groupId);
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to fetch group');
+      setError(err.message || 'Failed to fetch group');
       console.error('Error fetching group:', err);
       throw err;
     } finally {
@@ -46,81 +43,33 @@ export const GroupProvider = ({ children }) => {
     }
   };
 
-
-  // En src/context/GroupContext.js
-
-// Crear un grupo
-const createGroup = async (groupData) => {
-  setLoading(true);
-  setError(null);
-  try {
-    const response = await axios.post(`${API_URL}/groups`, groupData);
-    
-    // Verificar explícitamente la estructura de la respuesta
-    if (response && response.data) {
-      console.log("Create group response:", response.data);
-      // Actualizar la lista de grupos
-      if (response.data.group) {
-        setGroups([...groups, response.data.group]);
-      }
-      return response.data;
-    } else {
-      console.error("Invalid response format:", response);
-      throw new Error('Invalid response format');
-    }
-  } catch (err) {
-    console.error('Error creating group:', err);
-    setError(err.response?.data?.msg || 'Failed to create group');
-    throw err;
-  } finally {
-    setLoading(false);
-  }
-};
-
-// Eliminar un grupo
-const deleteGroup = async (groupId) => {
-  setLoading(true);
-  setError(null);
-  try {
-    const response = await axios.delete(`${API_URL}/groups/${groupId}`);
-    
-    // Verificar explícitamente la respuesta
-    console.log("Delete group response:", response.data);
-    
-    // Actualizar el estado local solo si la respuesta no indica error
-    setGroups(groups.filter(group => group._id !== groupId));
-    
-    return response.data;
-  } catch (err) {
-    console.error('Error deleting group:', err);
-    // Si el error es 404, consideramos que el grupo ya no existe
-    if (err.response?.status === 404) {
-      setGroups(groups.filter(group => group._id !== groupId));
-      return { msg: 'Group removed' }; // Simular éxito
-    }
-    setError(err.response?.data?.msg || 'Failed to delete group');
-    throw err;
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  // Update a group
-  const updateGroup = async (groupId, groupData) => {
-    setLoading(true);
-    setError(null);
+  // Crear un nuevo grupo
+  const createGroup = async (groupData) => {
     try {
-      const response = await axios.patch(`${API_URL}/groups/${groupId}`, groupData);
-      
-      // Update group in local state
-      setGroups(groups.map(group => 
-        group._id === groupId ? response.data.group : group
-      ));
-      
-      return response.data.group;
+      setLoading(true);
+      setError(null);
+      const newGroup = await groupService.createGroup(groupData);
+      setGroups([...groups, newGroup]);
+      return newGroup;
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to update group');
+      setError(err.message || 'Failed to create group');
+      console.error('Error creating group:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Actualizar un grupo existente
+  const updateGroup = async (groupId, groupData) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const updatedGroup = await groupService.updateGroup(groupId, groupData);
+      setGroups(groups.map(group => group._id === groupId ? updatedGroup : group));
+      return updatedGroup;
+    } catch (err) {
+      setError(err.message || 'Failed to update group');
       console.error('Error updating group:', err);
       throw err;
     } finally {
@@ -128,21 +77,16 @@ const deleteGroup = async (groupId) => {
     }
   };
 
-  // Add a member to a group
+  // Añadir miembro a un grupo
   const addGroupMember = async (groupId, memberId) => {
-    setLoading(true);
-    setError(null);
     try {
-      const response = await axios.post(`${API_URL}/groups/${groupId}/members`, { memberId });
-      
-      // Update group in local state
-      setGroups(groups.map(group => 
-        group._id === groupId ? response.data.group : group
-      ));
-      
-      return response.data.group;
+      setLoading(true);
+      setError(null);
+      const updatedGroup = await groupService.addGroupMember(groupId, memberId);
+      setGroups(groups.map(group => group._id === groupId ? updatedGroup : group));
+      return updatedGroup;
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to add member to group');
+      setError(err.message || 'Failed to add member to group');
       console.error('Error adding member to group:', err);
       throw err;
     } finally {
@@ -150,23 +94,16 @@ const deleteGroup = async (groupId) => {
     }
   };
 
-  // Remove a member from a group
+  // Eliminar miembro de un grupo
   const removeGroupMember = async (groupId, memberId) => {
-    setLoading(true);
-    setError(null);
     try {
-      const response = await axios.delete(`${API_URL}/groups/${groupId}/members`, {
-        data: { memberId }
-      });
-      
-      // Update group in local state
-      setGroups(groups.map(group => 
-        group._id === groupId ? response.data.group : group
-      ));
-      
-      return response.data.group;
+      setLoading(true);
+      setError(null);
+      const updatedGroup = await groupService.removeGroupMember(groupId, memberId);
+      setGroups(groups.map(group => group._id === groupId ? updatedGroup : group));
+      return updatedGroup;
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to remove member from group');
+      setError(err.message || 'Failed to remove member from group');
       console.error('Error removing member from group:', err);
       throw err;
     } finally {
@@ -174,23 +111,38 @@ const deleteGroup = async (groupId) => {
     }
   };
 
+  // Eliminar un grupo
+  const deleteGroup = async (groupId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await groupService.deleteGroup(groupId);
+      setGroups(groups.filter(group => group._id !== groupId));
+    } catch (err) {
+      setError(err.message || 'Failed to delete group');
+      console.error('Error deleting group:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Valor del contexto
+  const value = {
+    groups,
+    loading,
+    error,
+    fetchGroups,
+    getGroup,
+    createGroup,
+    updateGroup,
+    addGroupMember,
+    removeGroupMember,
+    deleteGroup
+  };
 
   return (
-    <GroupContext.Provider
-      value={{
-        groups,
-        loading,
-        error,
-        fetchGroups,
-        getGroup,
-        createGroup,
-        updateGroup,
-        addGroupMember,
-        removeGroupMember,
-        deleteGroup,
-      }}
-    >
+    <GroupContext.Provider value={value}>
       {children}
     </GroupContext.Provider>
   );

@@ -1,8 +1,10 @@
-// File: src/services/api.js
+// src/services/api.js
 import axios from 'axios';
-import { API_URL } from '../config';
 
-// Create axios instance with base URL
+// Base URL desde las variables de entorno para facilitar el cambio entre entornos
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+// Crear instancia de axios con configuración base
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -10,13 +12,15 @@ const api = axios.create({
   },
 });
 
-// Request interceptor for adding the auth token to requests
+// Interceptor para añadir token a las solicitudes
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
     return config;
   },
   (error) => {
@@ -24,15 +28,20 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor for handling errors
+// Interceptor para manejar errores de respuesta
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Si el error es 401 (no autorizado), limpiar token y redirigir
     if (error.response && error.response.status === 401) {
-      // If 401 response returned from API, logout the user
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      
+      // Solo redirigir si estamos en el navegador
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
+    
     return Promise.reject(error);
   }
 );

@@ -1,8 +1,8 @@
 const Task = require('../models/Task');
 const User = require('../models/User'); // Asegúrate de importar el modelo User
+const Group = require('../models/Group'); // Asegúrate de importar el modelo Group
 
 // Create task
-// En createTask, asegúrate de que se guarde correctamente el ID del creador
 const createTask = async (req, res) => {
   try {
     console.log("User creating task:", req.user);
@@ -50,6 +50,9 @@ const getAllTasks = async (req, res) => {
 // Get single task
 const getTask = async (req, res) => {
   try {
+    console.log('User requesting task:', req.user); // Información de depuración
+    console.log('Task ID:', req.params.id);
+    
     const { id: taskId } = req.params;
     
     if (!taskId) {
@@ -74,18 +77,22 @@ const getTask = async (req, res) => {
       return res.status(404).json({ msg: `No task with id: ${taskId}` });
     }
     
-    // Check if user has access to this task
-    const isCreator = task.createdBy._id.toString() === req.user.userId;
+    // Verificar si el usuario tiene acceso a esta tarea
+    const isCreator = task.createdBy && task.createdBy._id.toString() === req.user.userId;
     const isAssigned = task.assignedTo && task.assignedTo._id.toString() === req.user.userId;
     
-    // Solo permitir acceso si el usuario es el creador o si le fue asignada
-    if (!isCreator && !isAssigned) {
+    // Si es una tarea personal, solo el creador puede verla
+    // Si es una tarea de grupo, el creador o la persona asignada pueden verla
+    const isPersonalTask = !task.group;
+    const hasAccess = isPersonalTask ? isCreator : (isCreator || isAssigned);
+    
+    if (!hasAccess) {
       return res.status(403).json({ msg: 'Not authorized to access this task' });
     }
     
     res.status(200).json({ task });
   } catch (error) {
-    console.error('Get task error:', error);
+    console.error('Error getting task:', error);
     res.status(500).json({ msg: error.message });
   }
 };
@@ -101,35 +108,33 @@ const updateTask = async (req, res) => {
     }
     
     // Check authorization
-    // Si el task.createdBy es un string/ObjectId, convertirlo
     const isCreator = task.createdBy.toString() === req.user.userId;
     const isAssigned = task.assignedTo && task.assignedTo.toString() === req.user.userId;
     
+    // Si no es creador ni está asignado, no tiene permisos
     if (!isCreator && !isAssigned) {
       return res.status(403).json({ msg: 'Not authorized to update this task' });
     }
     
-    // If user is assigned but not creator, they can only update status
+    // Si está asignado pero no es creador, solo puede actualizar el estado
     if (isAssigned && !isCreator) {
       const { status } = req.body;
-      if (!status) {
-        return res.status(400).json({ msg: 'Only status can be updated' });
+      
+      if (Object.keys(req.body).length > 1 || !status) {
+        return res.status(403).json({ msg: 'You can only update the status of this task' });
       }
       
       const updatedTask = await Task.findOneAndUpdate(
         { _id: taskId },
         { status },
         { new: true, runValidators: true }
-      )
-      .populate({
+      ).populate({
         path: 'assignedTo',
         select: 'username email'
-      })
-      .populate({
+      }).populate({
         path: 'createdBy',
         select: 'username email'
-      })
-      .populate({
+      }).populate({
         path: 'group',
         select: 'name'
       });
@@ -137,21 +142,18 @@ const updateTask = async (req, res) => {
       return res.status(200).json({ task: updatedTask });
     }
     
-    // Creator can update anything
+    // Si es creador, puede actualizar todo
     const updatedTask = await Task.findOneAndUpdate(
       { _id: taskId },
       req.body,
       { new: true, runValidators: true }
-    )
-    .populate({
+    ).populate({
       path: 'assignedTo',
       select: 'username email'
-    })
-    .populate({
+    }).populate({
       path: 'createdBy',
       select: 'username email'
-    })
-    .populate({
+    }).populate({
       path: 'group',
       select: 'name'
     });

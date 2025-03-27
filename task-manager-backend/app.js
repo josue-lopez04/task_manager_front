@@ -24,6 +24,19 @@ app.use('/api/users', userRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/groups', groupRoutes);
 
+// Agrega esto a tu archivo app.js del backend
+app.get('/', (req, res) => {
+  res.json({ message: 'back funcionando correctamente' });
+});
+
+app.use(cors({
+  origin: 'https://task-manager-frontend-rosy-theta.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

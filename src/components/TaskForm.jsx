@@ -1,17 +1,18 @@
-// File: src/components/TaskForm.jsx
+// src/components/TaskForm.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTaskContext } from '../context/TaskContext';
-import { useUserContext } from '../context/UserContext';
-import './TaskForm.css';
+import { useGroupContext } from '../context/GroupContext';
 
-
-const TaskForm = ({ task, groupId }) => {
+const TaskForm = ({ task, groupId, onSuccess }) => {
   const navigate = useNavigate();
   const { createTask, updateTask } = useTaskContext();
-  const { users, fetchUsers } = useUserContext();
+  const { getGroup } = useGroupContext();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [validationErrors, setValidationErrors] = useState({});
+  const [groupMembers, setGroupMembers] = useState([]);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -23,12 +24,24 @@ const TaskForm = ({ task, groupId }) => {
   });
 
   useEffect(() => {
-    // Load users for assignment dropdown if in a group
+    // Cargar los miembros del grupo si estamos en el contexto de un grupo
     if (groupId) {
-      fetchUsers();
+      const fetchGroupMembers = async () => {
+        try {
+          const { group } = await getGroup(groupId);
+          if (group && group.members) {
+            setGroupMembers(group.members);
+          }
+        } catch (err) {
+          console.error('Error loading group members:', err);
+          setError('Failed to load group members');
+        }
+      };
+      
+      fetchGroupMembers();
     }
     
-    // Only update form data if task prop changes and is not null
+    // Cargar datos de la tarea si estamos editando
     if (task) {
       setFormData({
         title: task.title || '',
@@ -39,44 +52,99 @@ const TaskForm = ({ task, groupId }) => {
         assignedTo: task.assignedTo?._id || '',
       });
     }
-  }, [task, groupId, fetchUsers]);
+  }, [task, groupId, getGroup]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
+    setFormData({
+      ...formData,
       [name]: value,
-    }));
+    });
+    
+    // Limpiar el error de validación cuando el usuario modifica el campo
+    if (validationErrors[name]) {
+      setValidationErrors({
+        ...validationErrors,
+        [name]: ''
+      });
+    }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.title.trim()) {
+      errors.title = 'Title is required';
+    }
+    
+    // Si no hay fecha de vencimiento, no hay validación adicional necesaria
+    if (formData.dueDate) {
+      // Verificar que la fecha no sea anterior a hoy
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selectedDate = new Date(formData.dueDate);
+      
+      if (selectedDate < today) {
+        errors.dueDate = 'Due date cannot be in the past';
+      }
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission
+    e.preventDefault();
+    
+    // Validar el formulario antes de enviarlo
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
       const taskData = { ...formData };
       
-      // Only include assignedTo if it has a value
+      // Solo incluir asignedTo si tiene un valor
       if (!taskData.assignedTo) {
         delete taskData.assignedTo;
       }
       
-      // Include group ID if provided
+      // Incluir el ID del grupo si se proporciona
       if (groupId) {
         taskData.group = groupId;
       }
 
       if (task) {
         await updateTask(task._id, taskData);
-        navigate(`/tasks/${task._id}`);
+        setSuccess('Task updated successfully!');
+        
+        // Esperar un momento para mostrar el mensaje de éxito antes de redirigir
+        setTimeout(() => {
+          navigate(`/tasks/${task._id}`);
+        }, 1500);
       } else {
         await createTask(taskData);
-        navigate(groupId ? `/groups/${groupId}` : '/tasks');
+        setSuccess('Task created successfully!');
+        
+        // Si hay un callback de éxito, llamarlo (para el modal)
+        if (onSuccess && typeof onSuccess === 'function') {
+          setTimeout(() => {
+            onSuccess();
+          }, 1500);
+        } else {
+          // Navegación normal si no es un modal, después de mostrar el mensaje
+          setTimeout(() => {
+            navigate(groupId ? `/groups/${groupId}` : '/tasks');
+          }, 1500);
+        }
       }
     } catch (err) {
-      console.error('Task form error:', err);
-      setError(err.response?.data?.msg || 'Failed to save task');
+      console.error('Error saving task:', err);
+      setError(err.response?.data?.msg || 'Failed to save task. Please check all fields and try again.');
     } finally {
       setLoading(false);
     }
@@ -89,10 +157,19 @@ const TaskForm = ({ task, groupId }) => {
           {error}
         </div>
       )}
+      
+      {success && (
+        <div className="bg-green-50 p-3 rounded text-green-600 text-sm flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          {success}
+        </div>
+      )}
 
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-          Title
+          Title <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -101,9 +178,13 @@ const TaskForm = ({ task, groupId }) => {
           value={formData.title}
           onChange={handleChange}
           required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-          disabled={loading}
+          className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
+            validationErrors.title ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+          }`}
         />
+        {validationErrors.title && (
+          <p className="mt-1 text-sm text-red-600">{validationErrors.title}</p>
+        )}
       </div>
 
       <div>
@@ -117,7 +198,6 @@ const TaskForm = ({ task, groupId }) => {
           value={formData.description}
           onChange={handleChange}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-          disabled={loading}
         />
       </div>
 
@@ -132,7 +212,6 @@ const TaskForm = ({ task, groupId }) => {
             value={formData.status}
             onChange={handleChange}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            disabled={loading}
           >
             <option value="todo">To Do</option>
             <option value="in progress">In Progress</option>
@@ -151,7 +230,6 @@ const TaskForm = ({ task, groupId }) => {
             value={formData.priority}
             onChange={handleChange}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            disabled={loading}
           >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
@@ -170,12 +248,17 @@ const TaskForm = ({ task, groupId }) => {
           name="dueDate"
           value={formData.dueDate}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-          disabled={loading}
+          className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
+            validationErrors.dueDate ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+          }`}
         />
+        {validationErrors.dueDate && (
+          <p className="mt-1 text-sm text-red-600">{validationErrors.dueDate}</p>
+        )}
       </div>
 
-      {groupId && (
+      {/* Selector de usuario asignado - solo para tareas de grupo */}
+      {groupId && groupMembers.length > 0 && (
         <div>
           <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700">
             Assign To
@@ -186,12 +269,11 @@ const TaskForm = ({ task, groupId }) => {
             value={formData.assignedTo}
             onChange={handleChange}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            disabled={loading}
           >
             <option value="">Unassigned</option>
-            {users && users.map(user => (
-              <option key={user._id} value={user._id}>
-                {user.username}
+            {groupMembers.map(member => (
+              <option key={member._id} value={member._id}>
+                {member.username}
               </option>
             ))}
           </select>
@@ -212,7 +294,15 @@ const TaskForm = ({ task, groupId }) => {
           disabled={loading}
           className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
         >
-          {loading ? 'Saving...' : task ? 'Update Task' : 'Create Task'}
+          {loading ? (
+            <span className="flex items-center">
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Saving...
+            </span>
+          ) : task ? 'Update Task' : 'Create Task'}
         </button>
       </div>
     </form>
